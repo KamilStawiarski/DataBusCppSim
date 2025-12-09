@@ -8,11 +8,11 @@
 # wpisanie 'n' spowoduje przejście w tryb pracy bez zatrzymania
 # linia 0
 00000000
-10100101
-00101001
-01001100
-# linia 1
-00000001
-00110010
-01010101
-10000100
+10100100 # Inp -> RA
+10101000 # Inp -> RB
+01001100 # RB -> RC
+# linia 1; RC=RA+RB
+00000000 M=0, S3=0
+00110001 # RA -> R1; S2=0, S1=1
+01010111 # RB -> R2; S0=1
+10001111 # Alu -> RC
