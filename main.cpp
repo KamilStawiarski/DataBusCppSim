@@ -73,6 +73,7 @@ public:
     cycle& operator[](uint8_t _idx) {return data[_idx];}
     void readFromFile(const std::string &_filename)
     {
+        std::cout<<"Filename="<<_filename<<"\n";
         std::ifstream file(_filename);
         std::string str;
         uint8_t cycle=0;
@@ -122,13 +123,24 @@ public:
         return os;
     }
     bitType& operator[](uint8_t _idx) {return data[_idx];}
+    bitType operator[](uint8_t _idx) const {return data[_idx];}
     void readInput(void)
     {
         std::string input;
-        std::cout<<"Podaj wejscie:";
-        std::cin>>input;
+        while(validateInput(input))
+        {
+            std::cout<<"Write 4 input bits:";
+            std::cin>>input;
+        }
         for(uint8_t k=0;k<capacity;++k)
-            data[k]=input[k]-48;
+            data[k]=input[k]-'0';
+    }
+    bool validateInput(const std::string &_input) // true - invalid, false - valid
+    {
+        if(_input.length()!=4) return true;
+        for(uint8_t k=0;k<4;++k)
+            if(_input[k]!='0' && _input[k]!='1') return true;
+        return false;
     }
     reg& operator++()
     {
@@ -177,14 +189,12 @@ public:
     {
         uint8_t r1v=_R1.getValue();
         uint8_t r2v=_R2.getValue();
+        uint8_t M=_command[0];
+        uint8_t S=_command.getValue()-M*16;
 
-        // XXMDCBXA -> 000MDCBA
-        uint8_t command = ((_command.getValue() >> 1) & 0b00011110)
-                        + _command.getValue() % 2;
-
-        if(command<16)
+        if(M==0)
         {
-            switch (command)
+            switch (S)
             {
             case 0:
                 outReg.fromValue(0);
@@ -242,7 +252,7 @@ public:
         {
             for(uint8_t k=0;k<4;++k)
             {
-                switch (command-16)
+                switch (S)
                 {
                 case 0:
                     outReg[k]=!_R1[k];
@@ -311,15 +321,15 @@ private:
     bool end;
     bool nowait;
 public:
-    device():A(4), B(4), C(4), R1(4), R2(4), command(5), Rc(2), RI(3), input(4)
+    device(const std::string &filename=RAMfilename):A(4), B(4), C(4), R1(4), R2(4), command(5), Rc(2), RI(3), input(4)
     {
-        memory.readFromFile(RAMfilename);
+        memory.readFromFile(filename);
         end=false;
         nowait=false;
     }
     void displayState() const
     {
-        std::cout<<"RI: "<<RI<<" Rc:"<<Rc<<" A: "<<A<<" B: "<<B<<" C:"<<C<<"\n";
+        std::cout<<"RI: "<<RI<<" Rc:"<<Rc<<" A: "<<A<<" B: "<<B<<" C:"<<C<<" MS3S2S1S0="<<command<<"\n";
     }
     reg* getTxPtr(uint8_t _id)
     {
@@ -353,11 +363,9 @@ public:
         else
             rxPtr->parallelInput(txPtr);
 
-        if(rxId == 0 || rxId == 4 || rxId == 5)
-        {
-            command.serialInput(uc[6]);
-            command.serialInput(uc[7]);
-        }
+        // M S3 S2 S1 S0
+        if(Rc.getValue()==0 || Rc.getValue()==1 || Rc.getValue()==2) command.serialInput(uc[6]);
+        if(Rc.getValue()==0 || Rc.getValue()==1) command.serialInput(uc[7]);
 
         ++Rc;
         if(Rc.getValue()==0) ++RI;
@@ -382,9 +390,18 @@ public:
     }
 };
 
-int main(void)
+int main(int argc, char* argv[])
 {
-    device dataBus;
-    dataBus.startWork();
-	return 0;
+    if(argc==2)
+    {
+        const std::string arg = argv[1];
+        device dataBus(arg);
+        dataBus.startWork();
+    }
+    else
+    {
+        device dataBus;
+        dataBus.startWork();
+    }
+    return 0;
 }
