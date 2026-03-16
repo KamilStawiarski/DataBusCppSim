@@ -364,8 +364,8 @@ public:
             rxPtr->parallelInput(txPtr);
 
         // M S3 S2 S1 S0
-        if(Rc.getValue()==0 || Rc.getValue()==1 || Rc.getValue()==2) command.serialInput(uc[6]);
-        if(Rc.getValue()==0 || Rc.getValue()==1) command.serialInput(uc[7]);
+        if(Rc.getValue()==0 || Rc.getValue()==1) command.serialInput(uc[6]);
+        if(Rc.getValue()==0 || Rc.getValue()==1 || Rc.getValue()==2) command.serialInput(uc[7]);
 
         ++Rc;
         if(Rc.getValue()==0) ++RI;
